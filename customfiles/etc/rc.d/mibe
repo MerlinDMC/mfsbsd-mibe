@@ -1,0 +1,45 @@
+#!/bin/sh
+# $Id$
+
+# PROVIDE: mibe
+# REQUIRE: mountcritlocal NETWORKING
+# KEYWORD: FreeBSD
+
+. /etc/rc.subr
+
+name="mibe"
+start_cmd="mibe_start"
+stop_cmd=":"
+
+mibe_start()
+{
+	mkdir -p /mnt/cd
+
+	for cddev in /dev/cd*; do
+		mount_cd9660 $cddev /mnt/cd
+
+		ret=$?
+
+		if [ $ret -eq 0 ]; then
+			if [ -e /mnt/cd/customize ]; then
+				echo "Found CD at ${cddev}"
+
+				break
+			fi
+
+			umount /mnt/cd
+		fi
+	done
+
+	if [ -e /mnt/cd/customize ]; then
+		echo "CD is mounted at /mnt/cd"
+
+		/mnt/cd/customize
+	else
+		echo "CD was not found"
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
+
